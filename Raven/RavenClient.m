@@ -239,9 +239,10 @@ void exceptionHandler(NSException *exception) {
 		NSError * tmpError =nil;
 		NSData * tmpDataResponse = [NSURLConnection sendSynchronousRequest:request returningResponse:&tmpResponse error:&tmpError];
 		
+#if DEBUG
 		NSString * tmpStr = [[NSString alloc] initWithData:tmpDataResponse encoding:NSUTF8StringEncoding];
 		NSLog(@"%@", tmpStr);
-		
+#endif
 		if(tmpError){
 			NSLog(@"Connection failed! Error - %@ %@", [tmpError localizedDescription], [[tmpError userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey]);
 			
