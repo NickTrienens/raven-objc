@@ -68,6 +68,14 @@ void exceptionHandler(NSException *exception) {
         if (sharedClient == nil) {
             sharedClient = self;
         }
+		
+		self.backlog = (NSMutableArray*)[self readObjectFromFile:[self pathForCachedEventWithID:@"backlog.xml"]];
+		if(self.backlog == nil){
+			self.backlog = [NSMutableArray array];
+		}else{
+			[self sendBackloggedEvent];
+		}
+		
     }
 
     return self;
@@ -192,10 +200,8 @@ void exceptionHandler(NSException *exception) {
     NSError *error = nil;
 
     NSData *JSON = JSONEncode(dict, &error);
-    [self sendJSON:JSON];
-}
+   
 
-- (void)sendJSON:(NSData *)JSON {
     NSTimeInterval timestamp = [NSDate timeIntervalSinceReferenceDate];
     NSString *header = [NSString stringWithFormat:@"Sentry sentry_version=2.0, sentry_client=raven-objc/0.1.0, sentry_timestamp=%f, sentry_key=%@", timestamp, self.config.publicKey];
 
@@ -207,28 +213,120 @@ void exceptionHandler(NSException *exception) {
     [request setHTTPBody:JSON];
     [request setValue:header forHTTPHeaderField:@"X-Sentry-Auth"];
 
-    NSURLConnection *connection = [NSURLConnection connectionWithRequest:request delegate:self];
-    if (connection) {
-        self.receivedData = [NSMutableData data];
-    }
+
+	
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+		NSURLResponse * tmpResponse = nil;
+		NSError * tmpError =nil;
+		NSData * tmpDataResponse = [NSURLConnection sendSynchronousRequest:request returningResponse:&tmpResponse error:&tmpError];
+		
+		NSString * tmpStr = [[NSString alloc] initWithData:tmpDataResponse encoding:NSUTF8StringEncoding];
+		NSLog(@"%@", tmpStr);
+		
+		if(tmpError){
+			NSLog(@"Connection failed! Error - %@ %@", [tmpError localizedDescription], [[tmpError userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey]);
+			
+			//write the dictionary to then disk for an attempt later.
+			[self writeObject:dict toFile:[self pathForCachedEventWithID:dict[@"event_id"]]];
+			@synchronized(self.backlog){
+				[self.backlog addObject:dict[@"event_id"]];
+				[self writeObject:self.backlog toFile:[self pathForCachedEventWithID:@"backlog.xml"]];
+			}
+			[self createBacklogTrigger];
+		}
+		
+	});
+	
+}
+
+-(void)createBacklogTrigger{
+	if(self.backlogRequestTrigger == nil){
+		self.backlogRequestTrigger = [NSTimer scheduledTimerWithTimeInterval:10 target:self selector:@selector(sendBackloggedEvent) userInfo:nil repeats:YES];
+	}
+}
+
+-(void)sendBackloggedEvent{
+	NSLog(@"%d", [self.backlog count]);
+	NSString * tmpEventID = [self.backlog firstObject];
+	if (tmpEventID == nil) {
+		[self.backlogRequestTrigger invalidate];
+		self.backlogRequestTrigger = nil;
+		return;
+	}
+	[self createBacklogTrigger];
+	
+	//remove this event from the backlog, it will be added to the end if it failes again
+	@synchronized(self.backlog){
+		[self.backlog removeObject:tmpEventID];
+		[self writeObject:self.backlog toFile:[self pathForCachedEventWithID:@"backlog.xml"]];
+	}
+	//Make sure a file exist with the full event data
+	NSDictionary * tmpEventDictionary = (NSDictionary *)[self readObjectFromFile:[self pathForCachedEventWithID:tmpEventID]];
+	[[NSFileManager defaultManager] removeItemAtPath:[self pathForCachedEventWithID:tmpEventID] error:nil];
+	if([tmpEventDictionary isKindOfClass:[NSDictionary class]]){
+		
+		[self sendDictionary:tmpEventDictionary];
+			
+	}
+	
 }
 
 #pragma mark - NSURLConnectionDelegate
 
-- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
-    [self.receivedData setLength:0];
+-(NSObject<NSCoding>*)readObjectFromFile:(NSString *)filePath
+{
+    //archive object
+	NSData * fileData = [NSData dataWithContentsOfFile:filePath];
+	if(fileData == nil){
+		return nil;
+	}
+	NSKeyedUnarchiver * tmpUnarchiver = [[NSKeyedUnarchiver alloc] initForReadingWithData:fileData];
+	NSObject<NSCoding>* tmpObj = [tmpUnarchiver decodeObject];
+	[tmpUnarchiver finishDecoding];
+	
+	return tmpObj;
 }
 
-- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
-    [self.receivedData appendData:data];
+
+
+- (BOOL)writeObject:(NSObject<NSCoding>*)inObject toFile:(NSString *)filePath
+{
+    //archive object
+	NSMutableData *xmlData = [NSMutableData data];
+	NSKeyedArchiver *archive = [[NSKeyedArchiver alloc ]initForWritingWithMutableData:xmlData];
+	
+	[archive setOutputFormat:NSPropertyListXMLFormat_v1_0];
+	[archive encodeRootObject:inObject];
+	[archive finishEncoding];
+	
+	if(![xmlData writeToFile:filePath atomically:YES]){
+		NSLog(@"Failed to write to file to filePath=%@", filePath);
+		return NO;
+	}
+	return YES;
 }
 
-- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-    NSLog(@"Connection failed! Error - %@ %@", [error localizedDescription], [[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey]);
+
+- (NSString *)pathForCachedEventWithID:(NSString *)inStr{
+	
+	NSString *tmpEventPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+	tmpEventPath = [tmpEventPath stringByAppendingPathComponent:kRavenCachedEventsDirectory];
+	
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken,^{
+		  BOOL tmpIsDirectory = NO;
+		  if (![[NSFileManager defaultManager] fileExistsAtPath:tmpEventPath isDirectory:&tmpIsDirectory])
+				[[NSFileManager defaultManager]  createDirectoryAtPath:tmpEventPath withIntermediateDirectories:NO attributes:nil error:nil];
+				NSURL * tmpFile = [NSURL fileURLWithPath:tmpEventPath];
+				[tmpFile setResourceValue:[NSNumber numberWithBool:YES] forKey:NSURLIsExcludedFromBackupKey error:nil];
+	  });
+	
+	tmpEventPath = [tmpEventPath stringByAppendingPathComponent:inStr];
+	return tmpEventPath;
+	
 }
 
-- (void)connectionDidFinishLoading:(NSURLConnection *)connection {
-    NSLog(@"JSON sent to Sentry");
-}
+
+
 
 @end

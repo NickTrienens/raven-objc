@@ -10,6 +10,10 @@
 
 #define RavenCaptureMessage( s, ... ) [[RavenClient sharedClient] captureMessage:[NSString stringWithFormat:(s), ##__VA_ARGS__] level:kRavenLogLevelDebugInfo method:__FUNCTION__ file:__FILE__ line:__LINE__]
 
+#ifndef kRavenCachedEventsDirectory
+	#define  kRavenCachedEventsDirectory @"RavenEvents"
+#endif
+
 typedef enum {
     kRavenLogLevelDebug,
     kRavenLogLevelDebugInfo,
@@ -19,7 +23,11 @@ typedef enum {
 } RavenLogLevel;
 
 
-@interface RavenClient : NSObject <NSURLConnectionDelegate>
+
+@interface RavenClient : NSObject
+
+@property(strong) NSMutableArray * backlog;
+@property(strong) NSTimer * backlogRequestTrigger;
 
 // Singleton and initializers
 + (RavenClient *)clientWithDSN:(NSString *)DSN;

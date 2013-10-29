@@ -18,6 +18,6 @@
 
 - (NSString *)generateUUID;
 - (void)sendDictionary:(NSDictionary *)dict;
-- (void)sendJSON:(NSData *)JSON;
+//- (void)sendJSON:(NSData *)JSON;
 
 @end

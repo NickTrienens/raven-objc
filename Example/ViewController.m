@@ -42,7 +42,7 @@
 
 - (IBAction)sendMessage {
     [self addStatus:@"Sending message..."];
-    RavenCaptureMessage(@"TEST %i %@ %f", 1, @"2", 3.0);
+    RavenCaptureMessage(@"time tial %@", [NSDate date]);
 }
 
 - (IBAction)generateException {
