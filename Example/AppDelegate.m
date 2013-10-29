@@ -14,8 +14,7 @@
 @synthesize window = _window;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-//    [RavenClient clientWithDSN:@"https://30d629f2df9c4fdf8507e1704c09a526:f766cf8e0fff446986ac6daf1902e832@app.getsentry.com/888"];
-	[RavenClient clientWithDSN:@"https://b1cc174079df4caeb00ea96351b02de5:d75842433ccb4ba192b7ac3ff3ae8601@sentry.nyposttabletapps.com/2"];
+    [RavenClient clientWithDSN:@"https://30d629f2df9c4fdf8507e1704c09a526:f766cf8e0fff446986ac6daf1902e832@app.getsentry.com/888"];
     [[RavenClient sharedClient] setupExceptionHandler];
     return YES;
 }
