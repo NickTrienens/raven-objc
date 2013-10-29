@@ -92,16 +92,27 @@ void exceptionHandler(NSException *exception) {
 }
 
 - (void)captureMessage:(NSString *)message level:(RavenLogLevel)level method:(const char *)method file:(const char *)file line:(NSInteger)line {
-    NSMutableDictionary *data = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+    if( level < 5){
+		level = 2;
+	}
+	
+	NSMutableDictionary *data = [NSMutableDictionary dictionaryWithObjectsAndKeys:
                           [self generateUUID], @"event_id",
                           self.config.projectId, @"project",
                           [self.dateFormatter stringFromDate:[NSDate date]], @"timestamp",
                           message, @"message",
                           kRavenLogLevelArray[level], @"level",
                           @"objc", @"platform",
+						   
                           nil];
 
-    
+    NSDictionary* tmpInfoDict = [[NSBundle mainBundle] infoDictionary];
+	NSString* tmpAppVersion = [tmpInfoDict objectForKey:@"CFBundleVersion"];
+	if(tmpAppVersion == nil){
+		tmpAppVersion = @"";
+	}
+	[data setObject:@{@"model":[[UIDevice currentDevice] model], @"system":[[UIDevice currentDevice] systemVersion] , @"app_version": tmpAppVersion} forKey:@"tags"];
+	
     if (file) {
         [data setObject:[[NSString stringWithUTF8String:file] lastPathComponent] forKey:@"culprit"];
     }
@@ -152,6 +163,14 @@ void exceptionHandler(NSException *exception) {
 
     [data setObject:exceptionDict forKey:@"sentry.interfaces.Exception"];
     [data setObject:extraDict forKey:@"extra"];
+	
+	NSDictionary* tmpInfoDict = [[NSBundle mainBundle] infoDictionary];
+	NSString* tmpAppVersion = [tmpInfoDict objectForKey:@"CFBundleVersion"];
+	if(tmpAppVersion == nil){
+		tmpAppVersion = @"";
+	}
+	[data setObject:@{@"model":[[UIDevice currentDevice] model], @"system":[[UIDevice currentDevice] systemVersion] , @"app_version": tmpAppVersion} forKey:@"tags"];
+
 
     if (!sendNow) {
         // We can't send this exception to Sentry now, e.g. because the app is killed before the

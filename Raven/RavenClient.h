@@ -8,7 +8,15 @@
 
 #import <Foundation/Foundation.h>
 
-#define RavenCaptureMessage( s, ... ) [[RavenClient sharedClient] captureMessage:[NSString stringWithFormat:(s), ##__VA_ARGS__] level:kRavenLogLevelDebugInfo method:__FUNCTION__ file:__FILE__ line:__LINE__]
+#define RavenCaptureMessage( s, ... ) [[RavenClient sharedClient] captureMessage:[NSString stringWithFormat:(s), ##__VA_ARGS__] level:kRavenLogLevelDebugWarning method:__FUNCTION__ file:__FILE__ line:__LINE__]
+
+#define RavenCaptureMessageWithLevel( s, level, ... ) [[RavenClient sharedClient] captureMessage:[NSString stringWithFormat:(s), ##__VA_ARGS__] level:level method:__FUNCTION__ file:__FILE__ line:__LINE__]
+
+#ifdef DEBUG
+	#define RavenCaptureDebugMessageWithLevel( s, level, ... ) [[RavenClient sharedClient] captureMessage:[NSString stringWithFormat:(s), ##__VA_ARGS__] level:level method:__FUNCTION__ file:__FILE__ line:__LINE__]
+#else
+	#define RavenCaptureDebugMessageWithLevel( s, level, ... )
+#endif
 
 #ifndef kRavenCachedEventsDirectory
 	#define  kRavenCachedEventsDirectory @"RavenEvents"
