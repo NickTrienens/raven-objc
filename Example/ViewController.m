@@ -42,7 +42,9 @@
 
 - (IBAction)sendMessage {
     [self addStatus:@"Sending message..."];
-    RavenCaptureMessage(@"time tial %@", [NSDate date]);
+    RavenCaptureMessageWithLevel(kRavenLogLevelDebugInfo, @"time tial %@" , [NSDate date]);
+	RavenCaptureDebugMessageWithLevel(kRavenLogLevelDebugInfo, @"time tial %@" , [NSDate date]);
+	[[RavenClient sharedClient] captureMessage:[NSString stringWithFormat:@"time tial %@", [NSDate date]] level:kRavenLogLevelDebugInfo method:__FUNCTION__ file:__FILE__ line:__LINE__];
 }
 
 - (IBAction)generateException {

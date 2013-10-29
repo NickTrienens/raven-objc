@@ -10,12 +10,12 @@
 
 #define RavenCaptureMessage( s, ... ) [[RavenClient sharedClient] captureMessage:[NSString stringWithFormat:(s), ##__VA_ARGS__] level:kRavenLogLevelDebugWarning method:__FUNCTION__ file:__FILE__ line:__LINE__]
 
-#define RavenCaptureMessageWithLevel( s, level, ... ) [[RavenClient sharedClient] captureMessage:[NSString stringWithFormat:(s), ##__VA_ARGS__] level:level method:__FUNCTION__ file:__FILE__ line:__LINE__]
+#define RavenCaptureMessageWithLevel(inLevel, s,  ... ) [[RavenClient sharedClient] captureMessage:[NSString stringWithFormat:(s), ##__VA_ARGS__] level:inLevel method:__FUNCTION__ file:__FILE__ line:__LINE__]
 
 #ifdef DEBUG
-	#define RavenCaptureDebugMessageWithLevel( s, level, ... ) [[RavenClient sharedClient] captureMessage:[NSString stringWithFormat:(s), ##__VA_ARGS__] level:level method:__FUNCTION__ file:__FILE__ line:__LINE__]
+	#define RavenCaptureDebugMessageWithLevel(inLevel, s,  ... ) [[RavenClient sharedClient] captureMessage:[NSString stringWithFormat:(s), ##__VA_ARGS__] level:inLevel method:__FUNCTION__ file:__FILE__ line:__LINE__]
 #else
-	#define RavenCaptureDebugMessageWithLevel( s, level, ... )
+	#define RavenCaptureDebugMessageWithLevel(inLevel, s,  ... )
 #endif
 
 #ifndef kRavenCachedEventsDirectory
