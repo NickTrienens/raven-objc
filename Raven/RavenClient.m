@@ -91,6 +91,90 @@ void exceptionHandler(NSException *exception) {
     [self captureMessage:message level:level method:nil file:nil line:0];
 }
 
+
+-(NSMutableDictionary*)createDictionaryWithMessage:(NSString *)message params:(NSArray*)params level:(RavenLogLevel)level method:(const char *)method file:(const char *)file line:(NSInteger)line {
+
+	NSMutableDictionary *data = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+													 [self generateUUID], @"event_id",
+													 self.config.projectId, @"project",
+													 [self.dateFormatter stringFromDate:[NSDate date]], @"timestamp",
+													 message, @"message",
+													 kRavenLogLevelArray[level], @"level",
+													 @"objc", @"platform",
+													 
+													 nil];
+
+			NSDictionary* tmpInfoDict = [[NSBundle mainBundle] infoDictionary];
+			NSString* tmpAppVersion = [tmpInfoDict objectForKey:@"CFBundleVersion"];
+			if(tmpAppVersion == nil){
+				tmpAppVersion = @"";
+			}
+			[data setObject:@{@"model":[[UIDevice currentDevice] model], @"system":[[UIDevice currentDevice] systemVersion] , @"app_version": tmpAppVersion} forKey:@"tags"];
+
+			if(params && message){
+				[data setObject:@{@"message":message , @"params":params} forKey:@"sentry.interfaces.Message"];
+			}
+	
+			if (file) {
+				[data setObject:[[NSString stringWithUTF8String:file] lastPathComponent] forKey:@"culprit"];
+			}
+
+			if (method && file && line) {
+				NSDictionary *frame = [NSDictionary dictionaryWithObjectsAndKeys:
+									   [[NSString stringWithUTF8String:file] lastPathComponent], @"filename",
+									   [NSString stringWithUTF8String:method], @"function",
+									   [NSNumber numberWithInt:line], @"lineno",
+									   nil];
+				
+				NSDictionary *stacktrace = [NSDictionary dictionaryWithObjectsAndKeys:
+											[NSArray arrayWithObject:frame], @"frames",
+											nil];
+				
+				[data setObject:stacktrace forKey:@"sentry.interfaces.Stacktrace"];
+			}
+
+	return data;
+}
+
+-(NSMutableDictionary*)addQueryReportingToDictionary:(NSMutableDictionary*)inDictionary queryMessage:(NSString*)inMessage level:(NSString*)inLevel{
+	
+	NSMutableDictionary* tmpDict = [NSMutableDictionary dictionary];
+	if (inMessage) {
+		[tmpDict setObject:inMessage forKey:@"message"];
+	}
+	if (inLevel) {
+		[tmpDict setObject:inLevel forKey:@"level"];
+	}
+	
+	[inDictionary setObject:tmpDict forKey:@"sentry.interfaces.Query"];
+	
+	return inDictionary;
+}
+
+-(NSMutableDictionary*)addRequestReportingToDictionary:(NSMutableDictionary*)inDictionary responseObject:(NSURLResponse*)response request:(NSURLRequest*)request{
+	
+	NSMutableDictionary* tmpDict = [NSMutableDictionary dictionary];
+	
+	if(response){
+		if([response isKindOfClass:[NSHTTPURLResponse class]]){
+			[tmpDict setObject:@([(NSHTTPURLResponse*)response statusCode]) forKey:@"status_code"];
+		}
+		[tmpDict setObject:[response.URL absoluteString] forKey:@"url"];
+	}
+	if(request){
+		[tmpDict setObject:[request.URL absoluteString] forKey:@"url"];
+		[tmpDict setObject:[request HTTPMethod] forKey:@"method"];
+		if([request allHTTPHeaderFields] != nil){
+			[tmpDict setObject:[request allHTTPHeaderFields] forKey:@"headers"];
+		}
+	}
+	
+	[inDictionary setObject:tmpDict forKey:@"sentry.interfaces.Http"];
+	
+	return inDictionary;
+}
+
+
 - (void)captureMessage:(NSString *)message level:(RavenLogLevel)level method:(const char *)method file:(const char *)file line:(NSInteger)line {
     if( level < 5){
 		level = 2;

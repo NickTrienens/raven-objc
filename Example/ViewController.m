@@ -42,8 +42,17 @@
 
 - (IBAction)sendMessage {
     [self addStatus:@"Sending message..."];
-    RavenCaptureMessageWithLevel(kRavenLogLevelDebugInfo, @"time trial %@" , [NSDate date]);
+    //RavenCaptureMessageWithLevel(kRavenLogLevelDebugInfo, @"time trial %@" , [NSDate date]);
 //	RavenCaptureDebugMessageWithLevel(kRavenLogLevelDebugInfo, @"time trial %@" , [NSDate date]);
+	
+	    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://cnn.com"]];
+	NSURLResponse * tmpResponse = nil;
+	NSError * tmpError =nil;
+	NSData * tmpDataResponse = [NSURLConnection sendSynchronousRequest:request returningResponse:&tmpResponse error:&tmpError];
+	
+	NSMutableDictionary * tmpDict = RavenCreateDictinaryWithMessage(@"test", nil);
+	[[RavenClient sharedClient] addRequestReportingToDictionary:tmpDict	responseObject:tmpResponse request:request];
+	[[RavenClient sharedClient]  sendDictionary:tmpDict];
 }
 
 - (IBAction)generateException {
