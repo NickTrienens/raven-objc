@@ -159,11 +159,17 @@ void exceptionHandler(NSException *exception) {
 		if([response isKindOfClass:[NSHTTPURLResponse class]]){
 			[tmpDict setObject:@([(NSHTTPURLResponse*)response statusCode]) forKey:@"status_code"];
 		}
-		[tmpDict setObject:[response.URL absoluteString] forKey:@"url"];
+		if([response.URL absoluteString] != nil){
+			[tmpDict setObject:[response.URL absoluteString] forKey:@"url"];
+		}
 	}
 	if(request){
-		[tmpDict setObject:[request.URL absoluteString] forKey:@"url"];
-		[tmpDict setObject:[request HTTPMethod] forKey:@"method"];
+		if([request.URL absoluteString] != nil){
+			[tmpDict setObject:[request.URL absoluteString] forKey:@"url"];
+		}
+		if([request.URL absoluteString] != nil){
+			[tmpDict setObject:[request HTTPMethod] forKey:@"method"];
+		}
 		if([request allHTTPHeaderFields] != nil){
 			[tmpDict setObject:[request allHTTPHeaderFields] forKey:@"headers"];
 		}
