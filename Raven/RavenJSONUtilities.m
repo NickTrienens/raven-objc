@@ -22,6 +22,46 @@
 
 #import "RavenJSONUtilities.h"
 
+NSMutableDictionary * cleanDictionary(NSDictionary * inDictionary);
+
+
+NSMutableArray * cleanArray(NSArray * inArray){
+	
+	NSMutableArray * tmpArray = [NSMutableArray array];
+	for (id tmpValue in inArray) {
+		
+		if([tmpValue isKindOfClass:[NSDate class]]){
+			[tmpArray addObject:@([(NSDate*)tmpValue timeIntervalSince1970])];
+		}else if([tmpValue isKindOfClass:[NSDictionary class]]){
+			[tmpArray addObject:cleanDictionary(tmpValue)];
+		}else if([tmpValue isKindOfClass:[NSArray class]]){
+			[tmpArray addObject:cleanArray(tmpValue)];
+		}
+	}
+	return tmpArray;
+}
+
+
+NSMutableDictionary * cleanDictionary(NSDictionary * inDictionary){
+	
+	NSMutableDictionary * tmpDictionary = [NSMutableDictionary dictionary];
+	NSArray * tmpKeysArray = [inDictionary allKeys];
+	for (NSString * tmpKey in tmpKeysArray) {
+		id tmpValue = tmpDictionary[tmpKey];
+		if([tmpValue isKindOfClass:[NSDate class]]){
+			[tmpDictionary setObject:@([(NSDate*)tmpValue timeIntervalSince1970]) forKey:tmpKey];
+		}else if([tmpValue isKindOfClass:[NSData class]]){
+		//	[tmpDictionary setObject:@([(NSDate*)tmpValue timeIntervalSince1970]) forKey:tmpKey];
+		}else if([tmpValue isKindOfClass:[NSDictionary class]]){
+			[tmpDictionary setObject:cleanDictionary(tmpValue) forKey:tmpKey];
+		}else if([tmpValue isKindOfClass:[NSArray class]]){
+			[tmpDictionary setObject:cleanArray(tmpValue) forKey:tmpKey];
+		}
+	}
+	return tmpDictionary;
+}
+
+
 NSData * JSONEncode(id object, NSError **error) {
     __unsafe_unretained NSData *data = nil;
     
@@ -91,15 +131,23 @@ NSData * JSONEncode(id object, NSError **error) {
         invocation.target = _NSJSONSerializationClass;
         invocation.selector = _NSJSONSerializationSelector;
 
-        [invocation setArgument:&object atIndex:2]; // arguments 0 and 1 are self and _cmd respectively, automatically set by NSInvocation
+		NSMutableDictionary * tmpDictionary =  cleanDictionary(object);
+		
+        [invocation setArgument:&tmpDictionary atIndex:2]; // arguments 0 and 1 are self and _cmd respectively, automatically set by NSInvocation
         NSUInteger writeOptions = 0;
         [invocation setArgument:&writeOptions atIndex:3];
         if (error != NULL) {
             [invocation setArgument:&error atIndex:4];
         }
-
-        [invocation invoke];
-        [invocation getReturnValue:&data];
+		
+		@try {
+			[invocation invoke];
+			[invocation getReturnValue:&data];
+		}@catch (NSException *exception) {
+			DLog(@"%@", exception);
+			*error = [[NSError alloc] initWithDomain:NSStringFromClass([exception class]) code:0 userInfo:[exception userInfo]];
+		}
+		
     } else {
         NSDictionary *userInfo = [NSDictionary dictionaryWithObject:NSLocalizedString(@"Please either target a platform that supports NSJSONSerialization or add one of the following libraries to your project: JSONKit, SBJSON, or YAJL", nil) forKey:NSLocalizedRecoverySuggestionErrorKey];
         [[NSException exceptionWithName:NSInternalInconsistencyException reason:NSLocalizedString(@"No JSON generation functionality available", nil) userInfo:userInfo] raise];

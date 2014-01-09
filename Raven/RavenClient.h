@@ -84,6 +84,7 @@ sentry.interfaces.User
 -(NSMutableDictionary*)createDictionaryWithMessage:(NSString *)message params:(NSArray*)params level:(RavenLogLevel)level method:(const char *)method file:(const char *)file line:(NSInteger)line;
 -(NSMutableDictionary*)addRequestReportingToDictionary:(NSMutableDictionary*)inDictionary responseObject:(NSHTTPURLResponse*)response request:(NSURLRequest*)request;
 -(NSMutableDictionary*)addQueryReportingToDictionary:(NSMutableDictionary*)inDictionary queryMessage:(NSString*)inMessage level:(NSString*)inLevel;
+-(NSMutableDictionary*)addUserReportingToDictionary:(NSMutableDictionary*)inDictionary userId:(NSString*)inId userData:(NSDictionary*)inUserData;
 
 - (void)sendDictionary:(NSDictionary *)dict;
 

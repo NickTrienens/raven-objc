@@ -136,6 +136,18 @@ void exceptionHandler(NSException *exception) {
 	return data;
 }
 
+-(NSMutableDictionary*)addUserReportingToDictionary:(NSMutableDictionary*)inDictionary userId:(NSString*)inId userData:(NSDictionary*)inUserData{
+	NSMutableDictionary* tmpDict = [NSMutableDictionary dictionary];
+
+	
+	[tmpDict setObject:inId forKey:@"id"];
+	[tmpDict setObject:inUserData forKey:@"data"];
+	
+	[inDictionary setObject:tmpDict forKey:@"sentry.interfaces.User"];
+	
+	return inDictionary;
+}
+
 -(NSMutableDictionary*)addQueryReportingToDictionary:(NSMutableDictionary*)inDictionary queryMessage:(NSString*)inMessage level:(NSString*)inLevel{
 	
 	NSMutableDictionary* tmpDict = [NSMutableDictionary dictionary];
@@ -159,17 +171,11 @@ void exceptionHandler(NSException *exception) {
 		if([response isKindOfClass:[NSHTTPURLResponse class]]){
 			[tmpDict setObject:@([(NSHTTPURLResponse*)response statusCode]) forKey:@"status_code"];
 		}
-		if([response.URL absoluteString] != nil){
-			[tmpDict setObject:[response.URL absoluteString] forKey:@"url"];
-		}
+		[tmpDict setObject:[response.URL absoluteString] forKey:@"url"];
 	}
 	if(request){
-		if([request.URL absoluteString] != nil){
-			[tmpDict setObject:[request.URL absoluteString] forKey:@"url"];
-		}
-		if([request.URL absoluteString] != nil){
-			[tmpDict setObject:[request HTTPMethod] forKey:@"method"];
-		}
+		[tmpDict setObject:[request.URL absoluteString] forKey:@"url"];
+		[tmpDict setObject:[request HTTPMethod] forKey:@"method"];
 		if([request allHTTPHeaderFields] != nil){
 			[tmpDict setObject:[request allHTTPHeaderFields] forKey:@"headers"];
 		}
