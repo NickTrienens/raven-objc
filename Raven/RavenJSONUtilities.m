@@ -47,7 +47,8 @@ NSMutableDictionary * cleanDictionary(NSDictionary * inDictionary){
 	NSMutableDictionary * tmpDictionary = [NSMutableDictionary dictionary];
 	NSArray * tmpKeysArray = [inDictionary allKeys];
 	for (NSString * tmpKey in tmpKeysArray) {
-		id tmpValue = tmpDictionary[tmpKey];
+		id tmpValue = inDictionary[tmpKey];
+		//DLog(@"%@", tmpKey);
 		if([tmpValue isKindOfClass:[NSDate class]]){
 			[tmpDictionary setObject:@([(NSDate*)tmpValue timeIntervalSince1970]) forKey:tmpKey];
 		}else if([tmpValue isKindOfClass:[NSData class]]){
@@ -56,6 +57,8 @@ NSMutableDictionary * cleanDictionary(NSDictionary * inDictionary){
 			[tmpDictionary setObject:cleanDictionary(tmpValue) forKey:tmpKey];
 		}else if([tmpValue isKindOfClass:[NSArray class]]){
 			[tmpDictionary setObject:cleanArray(tmpValue) forKey:tmpKey];
+		}else{
+			[tmpDictionary setObject:tmpValue forKey:tmpKey];
 		}
 	}
 	return tmpDictionary;
@@ -132,7 +135,7 @@ NSData * JSONEncode(id object, NSError **error) {
         invocation.selector = _NSJSONSerializationSelector;
 
 		NSMutableDictionary * tmpDictionary =  cleanDictionary(object);
-		
+
         [invocation setArgument:&tmpDictionary atIndex:2]; // arguments 0 and 1 are self and _cmd respectively, automatically set by NSInvocation
         NSUInteger writeOptions = 0;
         [invocation setArgument:&writeOptions atIndex:3];
@@ -143,6 +146,8 @@ NSData * JSONEncode(id object, NSError **error) {
 		@try {
 			[invocation invoke];
 			[invocation getReturnValue:&data];
+
+
 		}@catch (NSException *exception) {
 			DLog(@"%@", exception);
 			*error = [[NSError alloc] initWithDomain:NSStringFromClass([exception class]) code:0 userInfo:[exception userInfo]];
