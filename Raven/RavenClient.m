@@ -333,7 +333,8 @@ void exceptionHandler(NSException *exception) {
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
 		NSURLResponse * tmpResponse = nil;
 		NSError * tmpError =nil;
-		NSData * tmpDataResponse = [NSURLConnection sendSynchronousRequest:request returningResponse:&tmpResponse error:&tmpError];
+		NSData * tmpDataResponse = nil;
+		tmpDataResponse = [NSURLConnection sendSynchronousRequest:request returningResponse:&tmpResponse error:&tmpError];
 		
 #if DEBUG
 		NSString * tmpStr = [[NSString alloc] initWithData:tmpDataResponse encoding:NSUTF8StringEncoding];
