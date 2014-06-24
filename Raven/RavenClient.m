@@ -123,7 +123,7 @@ void exceptionHandler(NSException *exception) {
 				NSDictionary *frame = [NSDictionary dictionaryWithObjectsAndKeys:
 									   [[NSString stringWithUTF8String:file] lastPathComponent], @"filename",
 									   [NSString stringWithUTF8String:method], @"function",
-									   [NSNumber numberWithInt:line], @"lineno",
+									   [NSNumber numberWithInteger:line], @"lineno",
 									   nil];
 				
 				NSDictionary *stacktrace = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -217,7 +217,7 @@ void exceptionHandler(NSException *exception) {
         NSDictionary *frame = [NSDictionary dictionaryWithObjectsAndKeys:
                                [[NSString stringWithUTF8String:file] lastPathComponent], @"filename", 
                                [NSString stringWithUTF8String:method], @"function", 
-                               [NSNumber numberWithInt:line], @"lineno", 
+                               [NSNumber numberWithInteger:line], @"lineno",
                                nil];
 
         NSDictionary *stacktrace = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -324,7 +324,7 @@ void exceptionHandler(NSException *exception) {
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-    [request setValue:[NSString stringWithFormat:@"%d", [JSON length]] forHTTPHeaderField:@"Content-Length"];
+    [request setValue:[NSString stringWithFormat:@"%lu", (unsigned long)[JSON length]] forHTTPHeaderField:@"Content-Length"];
     [request setHTTPBody:JSON];
     [request setValue:header forHTTPHeaderField:@"X-Sentry-Auth"];
 
@@ -363,7 +363,7 @@ void exceptionHandler(NSException *exception) {
 }
 
 -(void)sendBackloggedEvent{
-	NSLog(@"%d", [self.backlog count]);
+	NSLog(@"sendBackloggedEvent count: %lu", (unsigned long)[self.backlog count]);
 	NSString * tmpEventID = [self.backlog firstObject];
 	if (tmpEventID == nil) {
 		[self.backlogRequestTrigger invalidate];

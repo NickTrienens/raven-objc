@@ -149,7 +149,7 @@ NSData * JSONEncode(id object, NSError **error) {
 
 
 		}@catch (NSException *exception) {
-			DLog(@"%@", exception);
+			NSLog(@"%@", exception);
 			*error = [[NSError alloc] initWithDomain:NSStringFromClass([exception class]) code:0 userInfo:[exception userInfo]];
 		}
 		
