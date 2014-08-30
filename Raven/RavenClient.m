@@ -139,9 +139,10 @@ void exceptionHandler(NSException *exception) {
 -(NSMutableDictionary*)addUserReportingToDictionary:(NSMutableDictionary*)inDictionary userId:(NSString*)inId userData:(NSDictionary*)inUserData{
 	NSMutableDictionary* tmpDict = [NSMutableDictionary dictionary];
 
-	
-	[tmpDict setObject:inId forKey:@"id"];
-	[tmpDict setObject:inUserData forKey:@"data"];
+	if(inId)
+		[tmpDict setObject:inId forKey:@"id"];
+	if(inUserData)
+		[tmpDict setObject:inUserData forKey:@"data"];
 	
 	[inDictionary setObject:tmpDict forKey:@"sentry.interfaces.User"];
 	
