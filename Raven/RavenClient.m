@@ -10,6 +10,7 @@
 #import "RavenClient_Private.h"
 #import "RavenConfig.h"
 #import "RavenJSONUtilities.h"
+#import <UIKit/UIKit.h>
 
 NSString *const kRavenLogLevelArray[] = {
     @"debug",
