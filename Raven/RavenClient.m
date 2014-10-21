@@ -33,14 +33,16 @@ void exceptionHandler(NSException *exception) {
 #pragma mark - Setters and getters
 
 - (NSDateFormatter *)dateFormatter {
-    if (!_dateFormatter) {
-        NSTimeZone *timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
-        _dateFormatter = [[NSDateFormatter alloc] init];
-        [_dateFormatter setTimeZone:timeZone];
-        [_dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss"];
-    }
+	@synchronized(self){
+		if (!_dateFormatter) {
+			NSTimeZone *timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
+			_dateFormatter = [[NSDateFormatter alloc] init];
+			[_dateFormatter setTimeZone:timeZone];
+			[_dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss"];
+		}
 
-    return _dateFormatter;
+		return _dateFormatter;
+	}
 }
 
 #pragma mark - Singleton and initializers
